@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+
+# Data and outputs
+outputs/
+outputs_smoke/
+outputs_smoke2/
+ablations/
+ablations_smoke/
+bench_run/
+preprocessed/
+*.npy
+*.pt
+*.jsonl
+*.csv
+*.png
+*.pdf
+
+# IDE
+.vscode/
+.ipynb_checkpoints/
