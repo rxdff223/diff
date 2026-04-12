@@ -125,9 +125,32 @@ Plots saved to `ablations_history/plots/`:
 - `history_mse_real.png`
 - `history_smoothness_l2_step.png`
 
-### 4.3 Interpretation
+### 4.3 Horizon-Length Ablation
+
+A second ablation study swept action chunk horizon length:
+- `K = 1`
+- `K = 4`
+- `K = 8`
+- `K = 16`
+
+Each run used one epoch and limited batch counts as a quick validation of the ablation framework.
+Results in `ablations_horizon/summary.csv`:
+
+| Horizon | MSE_real | MAE_real | Smoothness | Notes |
+|---|---|---|---|---|
+| 1 | 0.2611 | 0.4036 | NaN | very short chunk length yields unstable smoothness due to single-step output |
+| 4 | 0.1953 | 0.3449 | 1.2904 | moderate chunk length improved prediction consistency, but smoothness was high after limited training |
+| 8 | 0.1641 | 0.3215 | 0.7612 | original training horizon remains competitive and smoother than smaller chunks |
+| 16 | 0.2286 | 0.3714 | 1.0647 | long chunk length increased difficulty in this quick run and produced higher error |
+
+Plots saved to `ablations_horizon/plots/`:
+- `horizon_mse_real.png`
+- `horizon_smoothness_l2_step.png`
+
+### 4.4 Interpretation
 
 The diffusion policy architecture is well suited for chunked action prediction. The ablation confirms the pipeline can sweep hyperparameters and collect summary statistics.
+Horizon length has a strong impact on prediction difficulty: very short chunks are easy to overfit per-step error but unstable in smoothness, while long chunks become harder to learn with limited training.
 Longer history may improve performance with more training, but limited one-epoch runs can produce noisy trends.
 
 ## 5. Discussion
