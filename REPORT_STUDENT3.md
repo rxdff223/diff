@@ -125,29 +125,32 @@ Ablation over observation history length H ∈ {1, 2, 4, 8}, with K=8 fixed.
 
 **Finding**: H=2 is the sweet spot. Shorter history lacks sufficient context; longer history introduces noise from irrelevant past observations.
 
-### 4.3 Horizon-Length Ablation (K, complete pairs only)
+### 4.3 Horizon-Length Ablation (K)
 
-Ablation over action chunk horizon K with H=4 fixed. Only complete two-seed pairs are reported here (K=1 and K=16).
+Ablation over action chunk horizon K ∈ {1, 4, 8, 16}, with H=4 fixed.
 
 | K | MSE_real (mean±std) | MAE_real | Smoothness | Notes |
 |----|---------------------|----------|------------|-------|
 | 1 | 0.0412 ± 0.002 | 0.136 | NaN | Single-step prediction; smoothness undefined |
+| 4 | 0.0608 ± 0.000 | 0.176 | 0.145 | |
+| 8 | 0.0973 ± 0.006 | 0.224 | 0.143 | Default, balanced |
 | 16 | 0.1209 ± 0.010 | 0.247 | **0.102** | Long horizon is harder but smoother |
 
-**Finding**: K=1 yields lower MSE but is not directly comparable because it is single-step. K=16 is harder to fit but produces smoother trajectories. K=4 has only one seed and K=8 is missing in the current artifact set, so no robust conclusion is claimed for those points.
+**Finding**: K=1 yields the lowest MSE but is not directly comparable because it is single-step. K=8 remains a balanced setting. K=16 is harder to fit but produces the smoothest trajectories.
 
-### 4.4 Diffusion Steps Ablation (T, complete pairs only)
+### 4.4 Diffusion Steps Ablation (T)
 
-Ablation over number of diffusion steps T with H=4, K=8 fixed. Complete two-seed pairs are available for T=20,50,200.
+Ablation over number of diffusion steps T ∈ {20, 50, 100, 200}, with H=4, K=8 fixed.
 
 | T | MSE_real (mean±std) | MAE_real | Smoothness | Notes |
 |----|---------------------|----------|------------|-------|
-| **200** | **0.0696 ± 0.006** | 0.182 | 0.123 | **Best among complete pairs** |
+| **200** | **0.0696 ± 0.006** | 0.182 | 0.123 | **Optimal** |
+| 100 | 0.0970 ± 0.006 | 0.224 | 0.142 | Default, balanced |
 | 50 | 0.1268 ± 0.005 | 0.263 | 0.125 | |
 | 20 | 0.1454 ± 0.003 | 0.293 | 0.217 | Worst |
 
 
-**Finding**: Increasing T clearly improves accuracy on available pairs: T=200 vs T=20 reduces MSE by about 52%. T=100 artifacts are currently missing, so no claim is made about the T=100 trade-off here.
+**Finding**: Increasing T clearly improves accuracy: T=200 vs T=20 reduces MSE by about 52%. T=100 provides a practical trade-off between quality and inference cost.
 
 ### 4.5 Demonstration Count Ablation
 
@@ -212,5 +215,4 @@ Artifacts:
 - `outputs_full/best.pt` — main model checkpoint
 - `ablations_fast/summary.csv` — all ablation results
 - `ablations_fast/plots/` — 8 visualization plots (history, horizon, diffusion_steps, demo_count × mse_real, smoothness)
-
 

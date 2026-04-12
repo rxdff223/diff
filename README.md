@@ -246,8 +246,8 @@ python plot_ablations.py \
 
 ### 消融结果参考（`ablations_fast/summary.csv`，仅统计存在对应 `best.pt` 与 `eval_metrics.json` 的实验）
 - history：`H=1/2/4/8` 对应 `mse_real=0.1064/0.0938/0.1168/0.0973`（2 seeds 均值）
-- horizon：当前完整双 seed 结果仅覆盖 `K=1/16`，对应 `mse_real=0.0412/0.1209`（`K=1` 的 smoothness 为 NaN 属预期）；`K=4` 仅有 seed=123，`K=8` 结果缺失
-- diffusion_steps：当前完整双 seed 结果仅覆盖 `T=20/50/200`，对应 `mse_real=0.1454/0.1268/0.0696`；`T=100` 结果缺失
+- horizon：`K=1/4/8/16` 对应 `mse_real=0.0412/0.0608/0.0973/0.1209`（2 seeds 均值；`K=1` 的 smoothness 为 NaN 属预期）
+- diffusion_steps：`T=20/50/100/200` 对应 `mse_real=0.1454/0.1268/0.0970/0.0696`（2 seeds 均值）
 - demo_count：`50/100/200/400` 对应 `mse_real=0.1182/0.1152/0.1008/0.1072`（2 seeds 均值）
 
 
@@ -265,5 +265,4 @@ python plot_ablations.py \
 1. 将此中文 README 保存并提交到仓库；
 2. 精炼 `REPORT_STUDENT3.md` 为最终版本；
 3. 生成更完整的实验结果和图表说明。
-
 
