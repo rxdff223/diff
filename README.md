@@ -1,51 +1,51 @@
-﻿# 项目 2：双臂操纵扩散策略模仿学习
+﻿# Project 2: Diffusion Policy Imitation Learning for Dual-Arm Manipulation
 
-本仓库聚焦于双臂机器人任务中的扩散策略模仿学习，实现了：
-- 条件扩散策略模型
-- 训练与 checkpoint 保存
-- 多步动作块采样与推理
-- 离线评估与消融实验自动化
+This repository focuses on diffusion-policy imitation learning for dual-arm manipulation tasks. It includes:
+- A conditional diffusion-policy model
+- Training and checkpointing
+- Multi-step action-chunk sampling and inference
+- Offline evaluation and ablation automation
 
-## 0. 分工与交接（按工作包）
+## 0. Work Packages and Handoff
 
-项目按工作包拆分如下：
-- 工作包 A：环境搭建、专家示教采集（脚本 + 噪声）、数据预处理流水线
-- 工作包 B：经典 BC 与 DAgger 实现，以及 covariate shift 分析
-- 工作包 C：Diffusion Policy 核心模型（网络结构、训练循环、采样）
-- 工作包 D：全实验流水线、可视化、统计分析、最终报告与理论讨论
+Project ownership is partitioned by work package:
+- Work package A: environment setup, expert demonstration collection (scripted + noisy), and data preprocessing pipeline
+- Work package B: classic BC and DAgger implementation, plus covariate-shift analysis
+- Work package C: diffusion-policy core model (architecture, training loop, sampling)
+- Work package D: full experiment pipeline, visualization, statistical analysis, and final report with theoretical discussion
 
-本仓库当前覆盖工作包 C，并为总集成提供可复用实验产物：
-- 代码入口：`diffusion_policy/`、`train_diffusion_policy.py`、`eval_diffusion_policy.py`、`sample_policy.py`
-- 实验入口：`run_ablations.py`
-- 结果汇总：`ablations_fast/summary.csv`（当前为完整双 seed，32 行 / 16 组配置）
+This repository currently covers work package C and provides reusable outputs for final integration:
+- Code entry points: `diffusion_policy/`, `train_diffusion_policy.py`, `eval_diffusion_policy.py`, `sample_policy.py`
+- Experiment entry point: `run_ablations.py`
+- Aggregated results: `ablations_fast/summary.csv` (currently complete two-seed results, 32 rows / 16 settings)
 
-## 1. 项目简介
+## 1. Overview
 
-本项目通过专家演示数据学习双臂协调动作。与传统单步行为克隆不同，扩散策略直接预测动作块（action chunk），从而生成更平滑、更一致的控制信号。
+The goal is to learn coordinated dual-arm behavior from expert demonstrations. Unlike one-step behavior cloning, the diffusion policy predicts an action chunk directly, producing smoother and more consistent control signals.
 
-## 2. 数据格式
+## 2. Data Format
 
-请将预处理数据放在 `preprocessed/` 目录下：
-- `liftpot_images.npy`：形状 `[N, T, D_obs]`，当前示例 `[500, 75, 1024]`
-- `liftpot_actions.npy`：形状 `[N, T, D_act]`，当前示例 `[500, 75, 16]`
-- `stats.json`：动作归一化所需的 `min/max` 数据（可选）
+Put preprocessed data under `preprocessed/`:
+- `liftpot_images.npy`: shape `[N, T, D_obs]`, current example `[500, 75, 1024]`
+- `liftpot_actions.npy`: shape `[N, T, D_act]`, current example `[500, 75, 16]`
+- `stats.json`: optional action `min/max` statistics for normalization
 
-样本构造规则：
-- 观察历史长度：`H`
-- 动作块长度：`K`
+Window construction:
+- Observation history length: `H`
+- Action chunk horizon: `K`
 
-对时间步 `t`：
-- 条件输入：`obs[t-H+1:t+1]`
-- 目标输出：`act[t:t+K]`
+At timestep `t`:
+- Condition input: `obs[t-H+1:t+1]`
+- Target output: `act[t:t+K]`
 
-## 3. 环境安装
+## 3. Environment Setup
 
-推荐环境：
+Recommended environment:
 - Python 3.9
 - CUDA 12.1
-- RTX 2060 或兼容 GPU
+- RTX 2060 or compatible GPU
 
-安装命令：
+Install commands:
 
 ```bash
 python -m pip install --upgrade pip
@@ -53,16 +53,16 @@ conda install pytorch=2.4.1 torchvision torchaudio pytorch-cuda=12.1 -c pytorch 
 pip install -r requirements.txt
 ```
 
-`requirements.txt` 包含：
+`requirements.txt` includes:
 - `numpy>=1.24`
 - `tqdm>=4.66`
 - `matplotlib>=3.8`
 
-## 4. 训练流程
+## 4. Training
 
-主训练脚本：`train_diffusion_policy.py`
+Main training script: `train_diffusion_policy.py`
 
-示例命令：
+Example:
 
 ```bash
 python train_diffusion_policy.py \
@@ -76,17 +76,17 @@ python train_diffusion_policy.py \
   --device cuda
 ```
 
-主要输出：
+Main outputs:
 - `outputs_full/best.pt`
 - `outputs_full/latest.pt`
 - `outputs_full/train_log.jsonl`
 - `outputs_full/train_config.json`
 
-## 5. 离线评估
+## 5. Offline Evaluation
 
-评估脚本：`eval_diffusion_policy.py`
+Evaluation script: `eval_diffusion_policy.py`
 
-示例命令：
+Example:
 
 ```bash
 python eval_diffusion_policy.py \
@@ -97,19 +97,19 @@ python eval_diffusion_policy.py \
   --device cuda
 ```
 
-指标：
+Metrics:
 - `mse_norm` / `mae_norm`
 - `mse_real` / `mae_real`
 - `smoothness_l2_step`
 
-当前主模型参考值：
+Current main-model reference values:
 - `mse_real = 0.1129`
 - `mae_real = 0.2469`
 - `smoothness_l2_step = 0.1397`
 
-## 6. 推理采样
+## 6. Sampling
 
-采样脚本：`sample_policy.py`
+Sampling script: `sample_policy.py`
 
 ```bash
 python sample_policy.py \
@@ -120,22 +120,22 @@ python sample_policy.py \
   --device cuda
 ```
 
-输出包括：
-- 归一化动作块预测
-- 反归一化后的真实动作块
-- 第一帧动作（用于 receding-horizon 控制）
+Outputs include:
+- Predicted normalized action chunk
+- Predicted denormalized action chunk
+- First action for receding-horizon execution
 
-## 7. 代码结构说明
+## 7. Code Structure
 
-- `diffusion_policy/model.py`：条件 Transformer 噪声预测网络
-- `diffusion_policy/diffusion.py`：DDPM 调度与反向采样
-- `diffusion_policy/policy.py`：训练损失与采样接口
-- `diffusion_policy/data.py`：窗口化数据集与归一化
-- `diffusion_policy/utils.py`：设备与随机种子工具
+- `diffusion_policy/model.py`: conditional Transformer noise predictor
+- `diffusion_policy/diffusion.py`: DDPM scheduling and reverse sampling
+- `diffusion_policy/policy.py`: training loss and sampling interface
+- `diffusion_policy/data.py`: windowed dataset and normalization
+- `diffusion_policy/utils.py`: device and random-seed helpers
 
-## 8. 消融实验
+## 8. Ablation Experiments
 
-消融脚本：`run_ablations.py`
+Ablation script: `run_ablations.py`
 
 ```bash
 python run_ablations.py \
@@ -147,14 +147,14 @@ python run_ablations.py \
   --seeds 42,123
 ```
 
-输出：
+Outputs:
 - `ablations_fast/summary.csv`
 - `ablations_fast/summary.jsonl`
-- 各实验子目录下的 `best.pt` 与 `eval_metrics.json`
+- Per-run directories containing `best.pt` and `eval_metrics.json`
 
-## 9. 绘图结果
+## 9. Plots
 
-绘图脚本：`plot_ablations.py`
+Plot script: `plot_ablations.py`
 
 ```bash
 python plot_ablations.py \
@@ -164,27 +164,27 @@ python plot_ablations.py \
   --secondary-metric smoothness_l2_step
 ```
 
-## 10. 交接建议（给最终总集成）
+## 10. Integration Notes (for Final Merge)
 
-- 先固定工作包边界，再整合各章节与对比表，避免归因漂移
-- 将 BC/DAgger 最终表与 diffusion 表按相同 split/seeds 并排比较
-- 统一统计协议：均值 ± 标准差，并保留实验配置与随机种子
+- Lock work-package boundaries before merging report sections to avoid attribution drift
+- Compare BC/DAgger tables and diffusion tables under the same split/seed protocol
+- Use a single reporting convention (mean ± std) with explicit experiment configs and seeds
 
-## 11. 结果总结
+## 11. Result Summary
 
-主模型结果：
+Main-model result:
 - `mse_real = 0.1129`
 - `mae_real = 0.2469`
 - `smoothness_l2_step = 0.1397`
 
-`ablations_fast/summary.csv`（2 seeds 均值）关键结果：
-- history：`H=1/2/4/8` -> `mse_real=0.1064/0.0938/0.1168/0.0973`
-- horizon：`K=1/4/8/16` -> `mse_real=0.0412/0.0608/0.0973/0.1209`
-- diffusion_steps：`T=20/50/100/200` -> `mse_real=0.1454/0.1268/0.0970/0.0696`
-- demo_count：`50/100/200/400` -> `mse_real=0.1182/0.1152/0.1008/0.1072`
+Key results from `ablations_fast/summary.csv` (two-seed means):
+- history: `H=1/2/4/8` -> `mse_real=0.1064/0.0938/0.1168/0.0973`
+- horizon: `K=1/4/8/16` -> `mse_real=0.0412/0.0608/0.0973/0.1209`
+- diffusion_steps: `T=20/50/100/200` -> `mse_real=0.1454/0.1268/0.0970/0.0696`
+- demo_count: `50/100/200/400` -> `mse_real=0.1182/0.1152/0.1008/0.1072`
 
-## 12. 后续建议
+## 12. Next Steps
 
-- 接入 BC/DAgger 最终表并生成统一对比图
-- 在总报告中补齐理论分析与统计显著性说明
-- 增加任务成功率指标（不仅是回归误差）
+- Merge final BC/DAgger tables and generate unified comparison plots
+- Add theoretical discussion and significance notes in the final report
+- Add task-success metrics (beyond regression errors)
