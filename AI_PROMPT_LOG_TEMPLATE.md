@@ -1,4 +1,4 @@
-# AI Prompt Log Template
+﻿# AI Prompt Log Template
 
 > Fill one row per meaningful AI interaction (Grok/Claude/GPT/Cursor/etc.).
 
@@ -13,3 +13,14 @@
 - Keep prompts concise but specific.
 - Include failed prompts and what was learned.
 - For grading, emphasize how AI accelerated implementation, debugging, and experiment analysis.
+
+## Team Handoff Context
+
+When this log is used in the final team report, tag each row with owner scope in `Output Summary` or `How Used`:
+- `S1` environment/data pipeline
+- `S2` BC/DAgger/covariate shift
+- `S3` diffusion model/training/sampling
+- `S4` integration/analysis/reporting
+
+This prevents cross-student attribution drift during final write-up.
+

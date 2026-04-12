@@ -1,4 +1,18 @@
-# Student 3 Report Section Template (Diffusion Policy)
+﻿# Student 3 Report Section Template (Diffusion Policy)
+
+## 0. Team Scope and Interface
+
+Use this scope block unchanged in the final merged report to avoid ownership ambiguity:
+- Student 1: Environment setup, expert demonstration collection (scripted + noisy), and data preprocessing pipeline.
+- Student 2: Classic BC and DAgger implementation + covariate shift analysis.
+- Student 3: Diffusion Policy core model (network architecture, training loop, sampling).
+- Student 4: Full experiment pipeline, visualization, statistical analysis, and final report + theoretical discussion.
+
+Integration notes for Student 4:
+- Keep Student 3 section strictly diffusion-focused.
+- Pull BC/DAgger numbers from Student 2 report; do not restate them here unless explicitly cited.
+- Ensure all compared methods use the same split/seed protocol before drawing final conclusions.
+
 
 ## 1. Role and Objective
 
@@ -156,3 +170,4 @@ Provide:
 - Commit hash
 - Random seeds
 - Hardware and runtime (Python 3.9, PyTorch 2.4.1+cu121)
+

@@ -1,5 +1,19 @@
 ﻿# Student 3 Report: Diffusion Policy for Dual-Arm Imitation Learning
 
+## 0. Team Scope and Handoff
+
+Project-wide ownership split (for final integration consistency):
+- Student 1: Environment setup, expert demonstration collection (scripted + noisy), and data preprocessing pipeline.
+- Student 2: Classic BC and DAgger implementation + covariate shift analysis.
+- Student 3: Diffusion Policy core model (network architecture, training loop, sampling).
+- Student 4: Full experiment pipeline, visualization, statistical analysis, and final report + theoretical discussion.
+
+What Student 4 should directly reuse from this report:
+- The Student 3 scope is diffusion-policy-only and does not claim BC/DAgger implementation ownership.
+- All ablation tables in this file are aligned to `ablations_fast/summary.csv` after missing-run backfill.
+- Final cross-method comparisons must merge Student 2 BC/DAgger tables with this diffusion table under a shared split/seed protocol.
+
+
 ## 1. Role and Objective
 
 This report documents the Student 3 contribution to Project 2: implementing a conditional diffusion policy for dual-arm manipulation imitation learning. The primary objective is to learn a policy `π(a_{t:t+K-1} | o_{t-H+1:t})` that predicts a multi-step action chunk conditioned on recent observation history.
@@ -215,4 +229,5 @@ Artifacts:
 - `outputs_full/best.pt` — main model checkpoint
 - `ablations_fast/summary.csv` — all ablation results
 - `ablations_fast/plots/` — 8 visualization plots (history, horizon, diffusion_steps, demo_count × mse_real, smoothness)
+
 
