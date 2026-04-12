@@ -1,86 +1,65 @@
-﻿# Student 3 Report: Diffusion Policy for Dual-Arm Imitation Learning
+﻿# Diffusion Policy Technical Report
 
-## 0. Team Scope and Handoff
+## 0. Scope and Handoff
 
-Project-wide ownership split (for final integration consistency):
-- Student 1: Environment setup, expert demonstration collection (scripted + noisy), and data preprocessing pipeline.
-- Student 2: Classic BC and DAgger implementation + covariate shift analysis.
-- Student 3: Diffusion Policy core model (network architecture, training loop, sampling).
-- Student 4: Full experiment pipeline, visualization, statistical analysis, and final report + theoretical discussion.
+Project ownership is partitioned by work packages:
+- Work package A: environment setup, expert demonstrations (scripted + noisy), data preprocessing pipeline
+- Work package B: classic BC and DAgger implementation, covariate-shift analysis
+- Work package C: diffusion-policy core model (architecture, training loop, sampling)
+- Work package D: full experiment pipeline, visualization, statistical analysis, final report and theoretical discussion
 
-What Student 4 should directly reuse from this report:
-- The Student 3 scope is diffusion-policy-only and does not claim BC/DAgger implementation ownership.
-- All ablation tables in this file are aligned to `ablations_fast/summary.csv` after missing-run backfill.
-- Final cross-method comparisons must merge Student 2 BC/DAgger tables with this diffusion table under a shared split/seed protocol.
+This report covers work package C only.
+For final integration:
+- Merge BC/DAgger result tables from work package B with the diffusion table in this report
+- Keep the same split/seed protocol across all compared methods
 
+## 1. Objective
 
-## 1. Role and Objective
-
-This report documents the Student 3 contribution to Project 2: implementing a conditional diffusion policy for dual-arm manipulation imitation learning. The primary objective is to learn a policy `π(a_{t:t+K-1} | o_{t-H+1:t})` that predicts a multi-step action chunk conditioned on recent observation history.
-
-Student 3 responsibilities:
-- Design and implement the diffusion policy model architecture.
-- Implement the training loop, loss, and checkpointing.
-- Enable sampling and offline evaluation of learned action chunks.
-- Automate ablation experiments and plot metrics.
-- Produce a reproducible report section with completed experiments.
+This report documents implementation and evaluation of a conditional diffusion policy for dual-arm imitation learning. The objective is to learn policy `π(a_{t:t+K-1} | o_{t-H+1:t})` that predicts a multi-step action chunk conditioned on recent observation history.
 
 ## 2. Method
 
 ### 2.1 Problem Setup
 
-The system uses sequential demonstration data with observation and action trajectories.
 - Observation history: `o_{t-H+1:t} ∈ ℝ^{H × D_obs}`
 - Action chunk: `a_{t:t+K-1} ∈ ℝ^{K × D_act}`
 
-The dataset is windowed with a history length `H` and horizon `K`.
-Each training example conditions on the last `H` observations and targets the next `K` actions.
+The dataset is windowed by history length `H` and horizon `K`.
 
 ### 2.2 Data Normalization
 
-Actions are min-max normalized to `[-1, 1]` using dataset statistics computed from training episodes.
-This normalization stabilizes diffusion training and supports direct prediction in a bounded action space.
+Actions are min-max normalized to `[-1, 1]` using training statistics.
 
 ### 2.3 Network Architecture
 
-The core network is a conditional Transformer encoder:
-- Observation projection: linear mapping `obs_dim → d_model`
-- Noisy action projection: linear mapping `action_dim → d_model`
-- Learned positional embeddings for observation tokens and action tokens
-- Sinusoidal timestep embedding injected into action tokens
-- Transformer encoder with `num_layers` layers and `nhead` attention
-- Final linear output from action-token embeddings to predicted noise
+The model is a conditional Transformer encoder:
+- observation projection: `obs_dim -> d_model`
+- noisy action projection: `action_dim -> d_model`
+- positional embeddings for observation/action tokens
+- sinusoidal timestep embedding injected into action tokens
+- Transformer encoder + linear output head for noise prediction
 
 ### 2.4 Diffusion Training
 
-Training minimizes the standard DDPM noise prediction loss.
-For each action chunk `x_0` and timestep `τ`:
-1. Sample `ε ~ N(0, I)`
-2. Produce noisy chunk `x_τ = √(ᾱ_τ) x_0 + √(1 - ᾱ_τ) ε`
-3. Predict `ε_θ(x_τ, o_hist, τ)`
-4. Loss: `L = ||ε - ε_θ||₂²`
-
-The noise schedule is linear from `beta_start` to `beta_end` over `T` diffusion steps.
+For action chunk `x_0` and timestep `τ`:
+1. sample `ε ~ N(0, I)`
+2. build noisy sample `x_τ = √(ᾱ_τ) x_0 + √(1 - ᾱ_τ) ε`
+3. predict `ε_θ(x_τ, o_hist, τ)`
+4. optimize `L = ||ε - ε_θ||₂²`
 
 ### 2.5 Inference
 
-At inference, the policy samples an action chunk by iteratively denoising from Gaussian noise back to `x_0`:
-- Initialize `x_T ~ N(0, I)`
-- For `t = T-1 ... 0`, apply the reverse diffusion step using the model prediction
-- Clamp final output to `[-1, 1]` and denormalize to real action space
-
-The first action in the denoised chunk is used for receding-horizon control.
+At inference, start from Gaussian noise and iteratively denoise from `T-1` to `0`, then denormalize predicted action chunk.
 
 ## 3. Experimental Protocol
 
 ### 3.1 Data and Split
 
-Data files:
-- `preprocessed/liftpot_images.npy` — 500 episodes × 75 timesteps × 1024 obs_dim
-- `preprocessed/liftpot_actions.npy` — 500 episodes × 75 timesteps × 16 action_dim
-- `preprocessed/stats.json` — action min/max statistics
+- `preprocessed/liftpot_images.npy`: 500 × 75 × 1024
+- `preprocessed/liftpot_actions.npy`: 500 × 75 × 16
+- `preprocessed/stats.json`
 
-The training/validation split uses 90% of episodes for train and 10% for validation with seed 42.
+Split: 90% train / 10% validation, seed 42.
 
 ### 3.2 Main Training Configuration
 
@@ -101,133 +80,79 @@ The training/validation split uses 90% of episodes for train and 10% for validat
 
 ### 3.3 Metrics
 
-Offline evaluation metrics:
-- `mse_norm`: MSE in normalized action space
-- `mae_norm`: MAE in normalized action space
-- `mse_real`: MSE in original action units
-- `mae_real`: MAE in original action units
-- `smoothness_l2_step`: average L2 norm of finite differences between consecutive predicted actions
+- `mse_norm`, `mae_norm`
+- `mse_real`, `mae_real`
+- `smoothness_l2_step`
 
-Baseline (predict training-set mean per action dimension): MSE_real ≈ 0.132
+Baseline (predict mean action per dimension): `MSE_real ≈ 0.132`.
 
 ## 4. Results
 
 ### 4.1 Main Training Outcome
 
-The main training run with H=4, K=8, T=100 completed 10 epochs successfully.
-Final model checkpoint: `outputs_full/best.pt`
+Main run (`H=4, K=8, T=100`) completed 10 epochs.
+Checkpoint: `outputs_full/best.pt`
 
-Validation evaluation on the full validation set produced:
+Validation metrics:
 - `mse_norm = 0.2200`
 - `mae_norm = 0.3507`
 - `mse_real = 0.1129`
 - `mae_real = 0.2469`
 - `smoothness_l2_step = 0.1397`
 
-This represents a **14% improvement over the baseline** (predicting mean).
+This is about 14% better than baseline MSE.
 
-### 4.2 History-Length Ablation (H, based on `ablations_fast/summary.csv`)
+### 4.2 History Ablation (H)
 
-Ablation over observation history length H ∈ {1, 2, 4, 8}, with K=8 fixed.
+| H | MSE_real (mean±std) | MAE_real | Smoothness |
+|----|---------------------|----------|------------|
+| 1 | 0.1064 ± 0.006 | 0.236 | 0.150 |
+| 2 | 0.0938 ± 0.004 | 0.219 | 0.142 |
+| 4 | 0.1168 ± 0.007 | 0.254 | 0.149 |
+| 8 | 0.0973 ± 0.002 | 0.220 | 0.127 |
 
-| H | MSE_real (mean±std) | MAE_real | Smoothness | Notes |
-|----|---------------------|----------|------------|-------|
-| **2** | **0.0938 ± 0.004** | 0.219 | 0.142 | **Optimal** |
-| 8 | 0.0973 ± 0.002 | 0.220 | **0.127** | Best smoothness |
-| 4 | 0.1168 ± 0.007 | 0.254 | 0.149 | Evaluated from regenerated `eval_metrics.json` for both seeds |
-| 1 | 0.1064 ± 0.006 | 0.236 | 0.150 | |
-
-**Finding**: H=2 is the sweet spot. Shorter history lacks sufficient context; longer history introduces noise from irrelevant past observations.
-
-### 4.3 Horizon-Length Ablation (K)
-
-Ablation over action chunk horizon K ∈ {1, 4, 8, 16}, with H=4 fixed.
+### 4.3 Horizon Ablation (K)
 
 | K | MSE_real (mean±std) | MAE_real | Smoothness | Notes |
 |----|---------------------|----------|------------|-------|
-| 1 | 0.0412 ± 0.002 | 0.136 | NaN | Single-step prediction; smoothness undefined |
+| 1 | 0.0412 ± 0.002 | 0.136 | NaN | single-step, smoothness undefined |
 | 4 | 0.0608 ± 0.000 | 0.176 | 0.145 | |
-| 8 | 0.0973 ± 0.006 | 0.224 | 0.143 | Default, balanced |
-| 16 | 0.1209 ± 0.010 | 0.247 | **0.102** | Long horizon is harder but smoother |
+| 8 | 0.0973 ± 0.006 | 0.224 | 0.143 | default |
+| 16 | 0.1209 ± 0.010 | 0.247 | 0.102 | smoother but harder |
 
-**Finding**: K=1 yields the lowest MSE but is not directly comparable because it is single-step. K=8 remains a balanced setting. K=16 is harder to fit but produces the smoothest trajectories.
+### 4.4 Diffusion-Step Ablation (T)
 
-### 4.4 Diffusion Steps Ablation (T)
+| T | MSE_real (mean±std) | MAE_real | Smoothness |
+|----|---------------------|----------|------------|
+| 20 | 0.1454 ± 0.003 | 0.293 | 0.217 |
+| 50 | 0.1268 ± 0.005 | 0.263 | 0.125 |
+| 100 | 0.0970 ± 0.006 | 0.224 | 0.142 |
+| 200 | 0.0696 ± 0.006 | 0.182 | 0.123 |
 
-Ablation over number of diffusion steps T ∈ {20, 50, 100, 200}, with H=4, K=8 fixed.
+### 4.5 Demonstration-Count Ablation
 
-| T | MSE_real (mean±std) | MAE_real | Smoothness | Notes |
-|----|---------------------|----------|------------|-------|
-| **200** | **0.0696 ± 0.006** | 0.182 | 0.123 | **Optimal** |
-| 100 | 0.0970 ± 0.006 | 0.224 | 0.142 | Default, balanced |
-| 50 | 0.1268 ± 0.005 | 0.263 | 0.125 | |
-| 20 | 0.1454 ± 0.003 | 0.293 | 0.217 | Worst |
-
-
-**Finding**: Increasing T clearly improves accuracy: T=200 vs T=20 reduces MSE by about 52%. T=100 provides a practical trade-off between quality and inference cost.
-
-### 4.5 Demonstration Count Ablation
-
-Ablation over number of training episodes used, with H=4, K=8 fixed.
-
-| # Episodes | MSE_real (mean±std) | MAE_real | Smoothness | Notes |
-|------------|---------------------|----------|------------|-------|
-| 200 | **0.1008 ± 0.005** | 0.230 | 0.141 | **Optimal** |
-| 400 | 0.1072 ± 0.001 | 0.237 | 0.141 | |
-| 100 | 0.1152 ± 0.000 | 0.253 | 0.154 | |
-| 50 | 0.1182 ± 0.003 | 0.263 | 0.321 | Worst smoothness |
-
-**Finding**: 200 episodes is sufficient; adding more data (400 episodes) does not improve and may slightly degrade performance. Fewer episodes (50, 100) lead to noticeably worse models. This suggests the 500-episode dataset is more than adequate for this task.
+| # Episodes | MSE_real (mean±std) | MAE_real | Smoothness |
+|------------|---------------------|----------|------------|
+| 50 | 0.1182 ± 0.005 | 0.263 | 0.321 |
+| 100 | 0.1152 ± 0.000 | 0.253 | 0.154 |
+| 200 | 0.1008 ± 0.009 | 0.230 | 0.141 |
+| 400 | 0.1072 ± 0.001 | 0.237 | 0.141 |
 
 ## 5. Discussion
 
-### 5.1 Why Diffusion Policy
-
-Diffusion policies naturally model uncertainty and multi-modal action distributions, which is valuable for dual-arm manipulation where multiple valid control sequences may exist.
-By predicting full action chunks rather than single-step outputs, the policy can generate smoother and more coherent trajectories.
-Our experiments confirm that increasing diffusion steps significantly improves prediction quality on available complete-pair results.
-
-### 5.2 Key Findings
-
-1. **History length**: H=2 gives the lowest MSE among complete pairs, while H=8 gives best smoothness.
-2. **Diffusion steps matter significantly**: T=200 achieves about 52% lower MSE than T=20 on complete pairs.
-3. **Action chunk horizon**: K=1 is easiest but not directly comparable to long-horizon control; K=16 is harder yet smoother.
-4. **Data efficiency**: 200 demonstration episodes are sufficient; increasing to 400 does not improve MSE.
-
-### 5.3 Limitations
-
-- Inference cost grows linearly with diffusion steps T.
-- Offline MSE metrics do not directly measure task success or contact reliability.
-- All experiments are on offline imitation data; sim-to-real transfer has not been evaluated.
-- The H=8/K=16 configuration was the hardest to learn, suggesting model capacity may need to increase for very long sequences.
+- Diffusion steps significantly affect quality (`T=200` best MSE, `T=20` worst)
+- `K=8` is a balanced operating point between error and stability
+- Increasing data from 200 to 400 episodes does not improve MSE in this setup
 
 ## 6. Reproducibility
 
-Key commands used:
-
 ```bash
-# Main training
+# main training
 python train_diffusion_policy.py --data-dir preprocessed --history 4 --horizon 8 --diffusion-steps 100 --batch-size 64 --epochs 10 --out-dir outputs_full --device cuda
 
-# Evaluation
+# evaluation
 python eval_diffusion_policy.py --checkpoint outputs_full/best.pt --data-dir preprocessed --split val --batch-size 64 --device cuda
 
-# Ablation experiments
+# ablations
 python run_ablations.py --study full --out-root ablations_fast --epochs 30 --batch-size 128 --d-model 256 --num-layers 6 --nhead 8 --diffusion-steps 100 --seeds "42,123" --device cuda
-
-# Generate plots
-python plot_ablations.py --summary-csv ablations_fast/summary.csv --out-dir ablations_fast/plots --metric mse_real --secondary-metric smoothness_l2_step
 ```
-
-Environment:
-- Python 3.9
-- PyTorch 2.4.1
-- CUDA 12.1
-- RTX 2060 GPU
-
-Artifacts:
-- `outputs_full/best.pt` — main model checkpoint
-- `ablations_fast/summary.csv` — all ablation results
-- `ablations_fast/plots/` — 8 visualization plots (history, horizon, diffusion_steps, demo_count × mse_real, smoothness)
-
-

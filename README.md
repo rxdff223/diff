@@ -1,34 +1,27 @@
 ﻿# 项目 2：双臂操纵扩散策略模仿学习
 
-本仓库是 **Student 3** 对 Project 2 的贡献，聚焦于双臂机器人任务中的扩散策略模仿学习。此项目实现了：
+本仓库聚焦于双臂机器人任务中的扩散策略模仿学习，实现了：
 - 条件扩散策略模型
 - 训练与 checkpoint 保存
 - 多步动作块采样与推理
 - 离线评估与消融实验自动化
 
-## 0. 团队分工与交接
+## 0. 分工与交接（按工作包）
 
-为避免最终报告口径混乱，项目按以下责任边界协作：
-- Student 1: Environment setup, expert demonstration collection (scripted + noisy), and data preprocessing pipeline.
-- Student 2: Classic BC and DAgger implementation + covariate shift analysis.
-- Student 3: Diffusion Policy core model (network architecture, training loop, sampling).
-- Student 4: Full experiment pipeline, visualization, statistical analysis, and final report + theoretical discussion.
+项目按工作包拆分如下：
+- 工作包 A：环境搭建、专家示教采集（脚本 + 噪声）、数据预处理流水线
+- 工作包 B：经典 BC 与 DAgger 实现，以及 covariate shift 分析
+- 工作包 C：Diffusion Policy 核心模型（网络结构、训练循环、采样）
+- 工作包 D：全实验流水线、可视化、统计分析、最终报告与理论讨论
 
-给 Student 4 的交接要点：
-- Student 3 代码责任集中在 `diffusion_policy/`、`train_diffusion_policy.py`、`eval_diffusion_policy.py`、`sample_policy.py`。
-- 复现实验主入口是 `run_ablations.py`，结果汇总口径以 `ablations_fast/summary.csv` 为准。
-- `ablations_fast/summary.csv` 当前为完整双 seed 结果（32 行，16 组配置）。
-- 最终总报告若需 BC/DAgger 对比，请直接合并 Student 2 的表格并统一 split/seed 口径。
+本仓库当前覆盖工作包 C，并为总集成提供可复用实验产物：
+- 代码入口：`diffusion_policy/`、`train_diffusion_policy.py`、`eval_diffusion_policy.py`、`sample_policy.py`
+- 实验入口：`run_ablations.py`
+- 结果汇总：`ablations_fast/summary.csv`（当前为完整双 seed，32 行 / 16 组配置）
 
 ## 1. 项目简介
 
-本项目旨在让双臂机器人通过专家演示数据学习协调动作。与传统行为克隆不同，扩散策略直接预测一个动作块（action chunk），从而生成更平滑、更一致的控制信号。
-
-Student 3 的工作范围包括：
-- `diffusion_policy` 模块核心实现
-- 训练与验证流程
-- 消融实验设计与结果分析
-- 文档与报告整理（便于 Student 4 汇总）
+本项目通过专家演示数据学习双臂协调动作。与传统单步行为克隆不同，扩散策略直接预测动作块（action chunk），从而生成更平滑、更一致的控制信号。
 
 ## 2. 数据格式
 
@@ -171,17 +164,11 @@ python plot_ablations.py \
   --secondary-metric smoothness_l2_step
 ```
 
-## 10. 报告与模板
+## 10. 交接建议（给最终总集成）
 
-Student 4 集成建议：
-- 固定团队分工口径（见“0. 团队分工与交接”）后再整合。
-- 先接入 Student 2 的 BC/DAgger 表，再和 diffusion 结果并排比较。
-- 统一统计协议：相同 split、相同 seeds、均值±标准差。
-
-仓库内模板：
-- `REPORT_STUDENT3_TEMPLATE.md`
-- `REPORT_STUDENT3.md`
-- `AI_PROMPT_LOG_TEMPLATE.md`
+- 先固定工作包边界，再整合各章节与对比表，避免归因漂移
+- 将 BC/DAgger 最终表与 diffusion 表按相同 split/seeds 并排比较
+- 统一统计协议：均值 ± 标准差，并保留实验配置与随机种子
 
 ## 11. 结果总结
 
@@ -198,6 +185,6 @@ Student 4 集成建议：
 
 ## 12. 后续建议
 
-- 接入 Student 2 BC/DAgger 最终表并做统一对比图
-- 在 Student 4 总报告中补齐理论分析与统计显著性说明
+- 接入 BC/DAgger 最终表并生成统一对比图
+- 在总报告中补齐理论分析与统计显著性说明
 - 增加任务成功率指标（不仅是回归误差）

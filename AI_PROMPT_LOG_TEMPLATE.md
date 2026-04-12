@@ -14,13 +14,12 @@
 - Include failed prompts and what was learned.
 - For grading, emphasize how AI accelerated implementation, debugging, and experiment analysis.
 
-## Team Handoff Context
+## Handoff Context
 
-When this log is used in the final team report, tag each row with owner scope in `Output Summary` or `How Used`:
-- `S1` environment/data pipeline
-- `S2` BC/DAgger/covariate shift
-- `S3` diffusion model/training/sampling
-- `S4` integration/analysis/reporting
+When this log is used in the final merged report, tag each row by work package in `Output Summary` or `How Used`:
+- `A`: environment/data pipeline
+- `B`: BC/DAgger/covariate shift
+- `C`: diffusion model/training/sampling
+- `D`: integration/analysis/reporting
 
-This prevents cross-student attribution drift during final write-up.
-
+This avoids attribution drift during final write-up.

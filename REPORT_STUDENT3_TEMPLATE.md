@@ -1,85 +1,66 @@
-﻿# Student 3 Report Section Template (Diffusion Policy)
+﻿# Diffusion Policy Report Template
 
-## 0. Team Scope and Interface
+## 0. Scope and Interface
 
-Use this scope block unchanged in the final merged report to avoid ownership ambiguity:
-- Student 1: Environment setup, expert demonstration collection (scripted + noisy), and data preprocessing pipeline.
-- Student 2: Classic BC and DAgger implementation + covariate shift analysis.
-- Student 3: Diffusion Policy core model (network architecture, training loop, sampling).
-- Student 4: Full experiment pipeline, visualization, statistical analysis, and final report + theoretical discussion.
+Use this ownership block in the merged report:
+- Work package A: environment setup, expert demonstrations (scripted + noisy), data preprocessing pipeline
+- Work package B: classic BC and DAgger implementation, covariate-shift analysis
+- Work package C: diffusion-policy core model (architecture, training loop, sampling)
+- Work package D: full experiment pipeline, visualization, statistical analysis, final report and theoretical discussion
 
-Integration notes for Student 4:
-- Keep Student 3 section strictly diffusion-focused.
-- Pull BC/DAgger numbers from Student 2 report; do not restate them here unless explicitly cited.
-- Ensure all compared methods use the same split/seed protocol before drawing final conclusions.
+Integration notes:
+- Keep this section strictly focused on work package C
+- Pull BC/DAgger numbers from work package B report
+- Ensure all compared methods share the same split/seed protocol
 
+## 1. Objective
 
-## 1. Role and Objective
-
-This section covers the Student 3 contribution: implementing a conditional diffusion policy for dual-arm imitation learning, including model architecture, training objective, and denoising inference.
-
-Goal: learn a policy `pi(a_{t:t+K-1} | o_{t-H+1:t})` that predicts a multi-step action chunk conditioned on observation history.
+Describe the diffusion-policy objective:
+- learn `π(a_{t:t+K-1} | o_{t-H+1:t})`
+- predict multi-step action chunks conditioned on observation history
 
 ## 2. Method
 
-### 2.1 Problem Setup
+### 2.1 Setup
 
-- Observation history: `o_{t-H+1:t} in R^(H x D_obs)`
-- Action chunk: `a_{t:t+K-1} in R^(K x D_act)`
-- We normalize each action dimension to `[-1, 1]` with dataset min-max stats.
+- Observation history: `o_{t-H+1:t} ∈ ℝ^{H × D_obs}`
+- Action chunk: `a_{t:t+K-1} ∈ ℝ^{K × D_act}`
+- Action normalization to `[-1, 1]`
 
 ### 2.2 Forward Diffusion
 
-For clean action chunk `x0` and timestep `tau`:
-
-`q(x_tau | x0) = N(sqrt(alpha_bar_tau) * x0, (1 - alpha_bar_tau) * I)`
-
-where:
-
-- `beta_tau` follows a linear schedule from `beta_start` to `beta_end`
-- `alpha_tau = 1 - beta_tau`
-- `alpha_bar_tau = product_{s=1..tau} alpha_s`
+`q(x_τ | x_0) = N(√(ᾱ_τ) x_0, (1-ᾱ_τ)I)`
 
 ### 2.3 Training Objective
 
-Model `epsilon_theta(x_tau, o_{hist}, tau)` predicts Gaussian noise added to action chunk.
+`L(θ) = E[|| ε - ε_θ(x_τ, o_hist, τ) ||_2^2]`
 
-Loss:
+### 2.4 Network
 
-`L(theta) = E_{x0, epsilon, tau}[ || epsilon - epsilon_theta(x_tau, o_{hist}, tau) ||_2^2 ]`
+- conditional Transformer encoder
+- observation tokens + noisy action tokens + timestep embedding
+- output predicted noise for each action token
 
-### 2.4 Network Architecture
+### 2.5 Inference
 
-- Backbone: conditional Transformer encoder
-- Inputs:
-  - observation tokens (length `H`)
-  - noisy action tokens (length `K`)
-  - sinusoidal timestep embedding injected into action tokens
-- Output: predicted noise for each action token
+- start from Gaussian noise
+- iterative denoising `T -> 0`
+- denormalize action chunk and execute first action
 
-### 2.5 Denoising Inference
-
-At test time:
-
-1. Start from Gaussian noise `x_T ~ N(0, I)`
-2. Iteratively denoise from `T -> 0` using DDPM reverse step
-3. Obtain normalized chunk `x_0_hat`, then denormalize to real action range
-4. Execute first action (receding horizon), then replan at next control cycle
-
-## 3. Experimental Protocol
+## 3. Protocol
 
 ### 3.1 Data and Split
 
-- Dataset: dual-arm liftpot demonstrations
-- Train/validation split: `val_ratio = ...`
-- Seed(s): `...`
+- dataset source:
+- split ratio:
+- random seeds:
 
-### 3.2 Main Hyperparameters
+### 3.2 Hyperparameters
 
 | Parameter | Value |
 |---|---|
 | History `H` | ... |
-| Action chunk `K` | ... |
+| Horizon `K` | ... |
 | Diffusion steps `T` | ... |
 | Batch size | ... |
 | Epochs | ... |
@@ -88,86 +69,63 @@ At test time:
 
 ### 3.3 Metrics
 
-- `MSE_real`: action-space mean squared error
-- `MAE_real`: action-space mean absolute error
-- `Smoothness_l2_step`: average L2 finite difference between consecutive predicted actions
-- (Optional in simulator) task success rate
+- `mse_real`
+- `mae_real`
+- `smoothness_l2_step`
+- optional task success rate
 
-## 4. Ablation Results
+## 4. Results
 
-### 4.1 History Length Ablation (`H`)
+### 4.1 Main Run
 
-| H | MSE_real (mean+-std) | Smoothness |
+- checkpoint:
+- metrics:
+
+### 4.2 History Ablation
+
+| H | MSE_real (mean±std) | Smoothness |
 |---|---|---|
 | 1 | ... | ... |
 | 2 | ... | ... |
 | 4 | ... | ... |
 | 8 | ... | ... |
 
-Short analysis:
-- ...
+### 4.3 Horizon Ablation
 
-### 4.2 Action Chunk Ablation (`K`)
-
-| K | MSE_real (mean+-std) | Smoothness |
+| K | MSE_real (mean±std) | Smoothness |
 |---|---|---|
 | 1 | ... | ... |
 | 4 | ... | ... |
 | 8 | ... | ... |
 | 16 | ... | ... |
 
-Short analysis:
-- ...
+### 4.4 Diffusion-Step Ablation
 
-### 4.3 Diffusion Step Ablation (`T`)
-
-| T | MSE_real (mean+-std) | Inference Cost | Smoothness |
+| T | MSE_real (mean±std) | Inference Cost | Smoothness |
 |---|---|---|---|
 | 20 | ... | ... | ... |
 | 50 | ... | ... | ... |
 | 100 | ... | ... | ... |
 | 200 | ... | ... | ... |
 
-Short analysis:
-- ...
+### 4.5 Demonstration-Count Ablation
 
-### 4.4 Demonstration Count Ablation
-
-| #Train Episodes | MSE_real (mean+-std) | Smoothness |
+| #Train Episodes | MSE_real (mean±std) | Smoothness |
 |---|---|---|
 | 50 | ... | ... |
 | 100 | ... | ... |
 | 200 | ... | ... |
 | 400 | ... | ... |
 
-Short analysis:
-- ...
-
 ## 5. Discussion
 
-### 5.1 Why Diffusion Helps in Dual-Arm Manipulation
-
-- Captures multi-modal expert behaviors better than deterministic BC
-- Produces smoother chunked trajectories via denoising prior
-- Reduces compounding error versus one-step BC in long horizons
-
-### 5.2 Limitations
-
-- Inference cost grows with diffusion steps
-- Offline metric does not fully reflect task completion quality
-- Distribution shift still exists for unseen objects and contacts
-
-### 5.3 Sim-to-Real Considerations
-
-- Sensor noise and latency mismatch
-- Dynamics gap and contact model mismatch
-- Need domain randomization / calibration / residual adaptation
+- key findings:
+- limitations:
+- implications for final integration:
 
 ## 6. Reproducibility
 
-Provide:
-- Exact training/evaluation commands
-- Commit hash
-- Random seeds
-- Hardware and runtime (Python 3.9, PyTorch 2.4.1+cu121)
-
+- exact commands
+- commit hash
+- random seeds
+- hardware/runtime
