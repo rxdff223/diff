@@ -1,0 +1,8 @@
+{
+  "num_batches": 10,
+  "mse_norm": 0.5321602046489715,
+  "mae_norm": 0.5848940789699555,
+  "mse_real": 0.2610608458518982,
+  "mae_real": 0.40358400344848633,
+  "smoothness_l2_step": NaN
+}
