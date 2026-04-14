@@ -9,20 +9,48 @@ __pycache__/
 env/
 venv/
 
-# Data and outputs
-outputs/
+# Data (large files - keep ignored)
+# But keep stats.json for Student 4 analysis
+preprocessed/*.npy
+
+# Large model checkpoints
+*.pt
+
+# Intermediate output directories
 outputs_smoke/
 outputs_smoke2/
-ablations/
 ablations_smoke/
 bench_run/
-preprocessed/
-*.npy
-*.pt
-*.jsonl
-*.csv
-*.png
-*.pdf
+
+# Individual run logs (keep only summary)
+ablations_fast/*/train_log.jsonl
+ablations_full/*/train_log.jsonl
+ablations_history/*/train_log.jsonl
+ablations_horizon/*/train_log.jsonl
+
+# Intermediate summary files
+ablations_fast/summary_all_from_artifacts.csv
+ablations_fast/summary_incomplete.csv
+ablations_fast/summary_missing.csv
+ablations_fast/summary_raw.csv
+ablations_fast/*.log
+
+# But keep these final results (use git add -f to force add)
+# Key outputs:
+!outputs_full/train_log.jsonl
+!outputs_full/train_config.json
+# Final ablation summary:
+!ablations_fast/summary.csv
+!ablations_fast/summary.jsonl
+!ablations_full/summary.csv
+!ablations_full/summary.jsonl
+!ablations_history/summary.csv
+!ablations_history/summary.jsonl
+!ablations_horizon/summary.csv
+!ablations_horizon/summary.jsonl
+# Plots:
+!ablations_fast/plots/
+!ablations_full/plots/
 
 # IDE
 .vscode/

@@ -1,0 +1,3 @@
+checkpoint,mae_norm,mae_real,mse_norm,mse_real,num_batches,run_name,seed,smoothness_l2_step,study,value,variable
+ablations_history\history_2_seed42\best.pt,0.4667566537857056,0.3226915419101715,0.33023584485054014,0.16176969110965728,10,history_2_seed42,42,0.5141514837741852,history,2,history
+ablations_history\history_4_seed42\best.pt,0.4777101010084152,0.3297229498624802,0.3447012811899185,0.16728429198265077,10,history_4_seed42,42,0.5471325993537903,history,4,history
